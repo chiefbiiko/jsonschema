@@ -3,6 +3,7 @@ package jsonschema
 import (
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -27,14 +28,24 @@ func loadFileURL(s string) (io.ReadCloser, error) {
 	return os.Open(f)
 }
 
+func loadHttpURL(u string) (io.ReadCloser, error) {
+	r, err := http.Get(u)
+	if err != nil {
+		return nil, err
+	}
+	return r.Body, nil
+}
+
 // Loaders is a registry of functions, which know how to load url
 // of specific schema.
 //
 // New loaders can be registered by adding to this map. Key is schema,
 // value is function that knows how to load url of that schema
 var Loaders = map[string]func(url string) (io.ReadCloser, error){
-	"":     loadFile,
-	"file": loadFileURL,
+	"":      loadFile,
+	"file":  loadFileURL,
+	"http":  loadHttpURL,
+	"https": loadHttpURL,
 }
 
 // SchemeNotRegisteredError is the error type returned by Load function.
